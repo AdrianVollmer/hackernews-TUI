@@ -1,0 +1,34 @@
+#!/bin/bash
+# Adrian Vollmer, SySS GmbH, 2023
+
+set -euo pipefail
+
+error() {
+    printf "${red}!!! %s${reset}\\n" "${*}" 1>&2
+}
+
+finish() {
+  result=$?
+  if [[ -n ${CONTAINER_ID:-} ]] ; then podman rm "${CONTAINER_ID}" ; fi
+  exit ${result}
+}
+trap finish EXIT ERR
+
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+IMAGE_NAME="hackernews_tui"
+podman container rm --force "${IMAGE_NAME}" 2> /dev/null
+
+if ( ! podman image exists "${IMAGE_NAME}" ) || [[ -n ${REBUILD:-} ]] ; then
+    (
+    cd "${SCRIPT_DIR}"
+    podman image rm "${IMAGE_NAME}" 2> /dev/null || true
+    podman build . -t "${IMAGE_NAME}"
+    )
+fi
+
+podman run -it --name "${IMAGE_NAME}" "${IMAGE_NAME}" "$@"
+#  CONTAINER_ID="$(podman run --detach -it --name "${IMAGE_NAME}" "${IMAGE_NAME}" $@)"
+
+#  podman logs "${CONTAINER_ID}"
+#  podman attach "${CONTAINER_ID}"
