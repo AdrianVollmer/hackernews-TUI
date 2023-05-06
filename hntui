@@ -27,7 +27,13 @@ if ( ! podman image exists "${IMAGE_NAME}" ) || [[ -n ${REBUILD:-} ]] ; then
     )
 fi
 
-podman run -it --name "${IMAGE_NAME}" "${IMAGE_NAME}" "$@"
+mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/hn-tui/"
+podman run -it \
+    --name "${IMAGE_NAME}" \
+    -v "${XDG_CONFIG_HOME:-$HOME/.config}/hn-tui/":/root/.config/ \
+    "${IMAGE_NAME}" \
+    "$@" \
+    ;
 #  CONTAINER_ID="$(podman run --detach -it --name "${IMAGE_NAME}" "${IMAGE_NAME}" $@)"
 
 #  podman logs "${CONTAINER_ID}"
